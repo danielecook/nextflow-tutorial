@@ -19,8 +19,8 @@ process download_large_NIL {
     publishDir "NIL/", mode: 'copy'
 
     output:
-    file("https://storage.googleapis.com/andersen/nextflow-tutorial/ECA501.bam")
-    file("https://storage.googleapis.com/andersen/nextflow-tutorial/ECA501.bam.bai")
+    file("ECA501.bam")
+    file("ECA501.bam.bai")
     
     """
         curl https://storage.googleapis.com/andersen/nextflow-tutorial/ECA501.bam > ECA501.bam
