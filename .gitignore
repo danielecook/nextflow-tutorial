@@ -1,0 +1,5 @@
+work/
+.nextflow/
+.nextflow*
+
+ECA501.bam*
