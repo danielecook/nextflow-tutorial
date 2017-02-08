@@ -21,20 +21,6 @@ process download_large_NIL {
 
 }
 
-/*
-process extract_reference {
-
-    input:
-        file("ref.fa.gz") from reference
-
-    output:
-        file("reference.fa") into unzip_reference
-
-    """
-        gunzip -kfc ref.fa.gz > reference.fa
-    """
-}
-*/
 
 delly_set = bam_cross2.concat(extra_bam).spread(types).spread(reference)
 
