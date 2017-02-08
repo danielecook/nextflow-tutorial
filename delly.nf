@@ -21,7 +21,7 @@ process download_large_NIL {
 
 }
 
-
+/*
 process extract_reference {
 
     input:
@@ -34,24 +34,25 @@ process extract_reference {
         gunzip -kfc ref.fa.gz > reference.fa
     """
 }
+*/
 
-delly_set = bam_cross2.concat(extra_bam).spread(types).spread(unzip_reference)
+delly_set = bam_cross2.concat(extra_bam).spread(types).spread(reference)
 
 process run_delly {
 
     echo true
 
-    tag { SM }
+    tag { "$SM - $type" }
 
     input:
-        set val("SM"), file("in.bam"), file("in.bam.bai"), val("type"), file("reference.fa") from delly_set
+        set val("SM"), file("in.bam"), file("in.bam.bai"), val("type"), file("reference.fa.gz") from delly_set
 
     output:
-        val("SM") into sv_SM
-        set file("${SM}.sv.bcf") into sv_bcf
+        file("${SM}.${type}.sv.bcf") into sv_bcf
 
     """
-        delly call -g reference.fa -t ${type} in.bam > ${SM}.sv.bcf
+        touch ${SM}.${type}.sv.bcf
+        delly call -g reference.fa.gz -t ${type} -o ${SM}.${type}.sv.bcf in.bam 
     """
 }
 
@@ -61,14 +62,23 @@ process combine {
     publishDir 'results/', mode: 'copy'
 
     input:
-        val("SM") from sv_SM
-        set file("${SM}.sv.bcf"), file("${SM}.sv.bcf.csi") from sv_bcf.toSortedList()
+        val "sv_set" from sv_bcf.toSortedList()
 
     output:
         file("sv.bcf")
 
     """
-        delly merge `ls *.bcf` > sv.bcf
+        merge_set=""
+        for i in ${sv_set.join(" ")}; do
+            if [ -s \${i} ]
+            then
+                    merge_set="\${merge_set} \${i}"
+            fi
+        done;
+
+        echo \${merge_set}
+
+        delly merge \${merge_set}
     """
 
 }
