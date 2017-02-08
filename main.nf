@@ -16,14 +16,15 @@ process sayHello {
 
 process download_large_NIL {
 
+    publishDir "NIL/", mode: 'copy'
+
     output:
     file("https://storage.googleapis.com/andersen/nextflow-tutorial/ECA501.bam")
     file("https://storage.googleapis.com/andersen/nextflow-tutorial/ECA501.bam.bai")
     
     """
-        mkdir NIL
-        curl https://storage.googleapis.com/andersen/nextflow-tutorial/ECA501.bam > NIL/ECA501.bam
-        curl https://storage.googleapis.com/andersen/nextflow-tutorial/ECA501.bam.bai > NIL/ECA501.bam.bai
+        curl https://storage.googleapis.com/andersen/nextflow-tutorial/ECA501.bam > ECA501.bam
+        curl https://storage.googleapis.com/andersen/nextflow-tutorial/ECA501.bam.bai > ECA501.bam.bai
     """
 
 }
