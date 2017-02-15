@@ -5,6 +5,9 @@ bam_list = Channel.fromFilePairs("test_data/*{.bam,.bam.bai}", flat: true)
 reference = Channel.fromPath("reference/WS245/WS245.fa.gz")
 bam_crossed = bam_list.into { bam_cross1; bam_cross2 }
 
+bam_input = Channel.fromPath("test_data/ECA257.bam")
+bam_input_index = Channel.fromPath("test_data/ECA257.bam.bai")
+
 process generate_simulated_reference {
 
     input:
@@ -64,10 +67,37 @@ process index_simulated {
 }
 
 
-/*
+process bam_to_fastq {
 
-when you are ready to go - input the simulated file as:
+    input:
+        file("a.bam") from bam_input
+        file("a.bam.bai") from bam_input_index
 
-    file*.ext
+    output:
+        set file("a1.fq.gz"), file("a2.fq.gz") into fq_out
 
-*/
+    """
+        samtools sort -n a.bam > rg_sorted.bam
+        samtools fastq -1 a1.fq.gz -2 a2.fq.gz rg_sorted.bam
+    """
+}
+
+process perform_alignment {
+
+    publishDir "simulated_bam", mode: 'copy'
+
+    input:
+        set file('simulated.fa.gz.amb'), file('simulated.fa.gz.ann'), file('simulated.fa.gz.bwt'), file('simulated.fa.gz.pac'), file('simulated.fa.gz.sa') from sim_set
+        set file("a1.fq.gz"), file("a2.fq.gz") from fq_out
+    output:
+        set file("out.bam"), file("out.bam.bai")
+
+    
+    """
+        bwa mem simulated.fa.gz a1.fq.gz a2.fq.gz | \\
+        sambamba view --sam-input --format=bam --with-header /dev/stdin | \\
+        sambamba sort --show-progress --tmpdir=. --out=out.bam /dev/stdin
+        sambamba index out.bam
+    """
+}
+
